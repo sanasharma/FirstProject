@@ -1,0 +1,57 @@
+﻿<ul id="side-menu" class="nav nav-list">
+    @{
+        var Model = Definition.MenuList;
+        var listMenu = Model.FindAll(x => x.MenuNo.Length == 2);
+        foreach (var menu in listMenu)
+        {
+            if (menu.Type == "Page")
+            {
+                string strMenuLink = Url.Content("~") + menu.MenuLink;
+                string cssActive = (menu.MenuNo == Definition.SelectMenuNo ? "active" : "");
+
+                <li class="@cssActive">
+                    <a href="@strMenuLink">
+                        <i class="menu-icon fa @menu.MenuIco"></i>
+                        <span class="menu-text"> @menu.MenuName </span>
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+            }
+            else if (menu.Type == "System")
+            {
+                string cssActive = (Definition.SelectMenuNo.StartsWith(menu.MenuNo) ? "active open" : "");
+
+                <li class="@cssActive">
+                    <a href="#" class="dropdown-toggle">
+                        <i class="menu-icon fa @menu.MenuIco"></i>
+                        <span class="menu-text"> @menu.MenuName</span>
+                        <b class="arrow fa fa-angle-down"></b>
+                    </a>
+                    <b class="arrow"></b>
+
+                    @{
+                        var listSubMenu = Model.FindAll(x => x.MenuNo.Length == 4 && x.MenuNo.StartsWith(menu.MenuNo));
+                        if (listSubMenu.Count > 0)
+                        {
+                            <ul class="submenu">
+                                @foreach (var menu1 in listSubMenu)
+                                {
+                                    string strMenuLink = Url.Content("~") + menu1.MenuLink;
+                                    cssActive = (menu1.MenuNo == Definition.SelectMenuNo ? "active" : "");
+
+                                    <li class="@cssActive">
+                                        <a href="@strMenuLink">
+                                            <i class="menu-icon fa @menu1.MenuIco"></i>
+                                            @menu1.MenuName
+                                        </a>
+                                        <b class="arrow"></b>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </li>
+                            }
+                        }
+    }
+</ul>

@@ -1,0 +1,146 @@
+﻿@model Models.ViewModel.DockDoor.DockDoorDetailViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 工具列區塊 -->
+    <div class="well well-sm">
+        <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="save_click"><i class="ace-icon fa fa-save"></i>Save</button>
+        <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="back_click"><i class="ace-icon fa fa-reply"></i>Back</button>
+        <button type="button" onclick="Extra_Click">Extra</button>
+    </div>
+
+    <!-- 訊息區塊 -->
+    <Alert bind:value="Result"></Alert>
+
+    <!-- 內容區塊 -->
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Door ID：</label>
+        <div class="col-sm-9">
+            <input name="DockDoorID" type="text" class="col-xs-12 col-sm-6" v-model="DockDoorID" />
+            <input name="DockDoorID" type="text" model="DockDoorID" />
+        
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">IP：</label>
+        <div class="col-sm-9">
+            <input name="IP" type="text" class="col-xs-12 col-sm-6" model="IP" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Locate：</label>
+        <div class="col-sm-9">
+            <input type="text" class="col-xs-12 col-sm-6" model="Locate" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right"> Caption IP：</label>
+        <div class="col-sm-9">
+            <input name="CaptionPanelIP" type="text" class="col-xs-12 col-sm-6" model="CaptionPanelIP" />
+        </div>
+        
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">RFID</label>
+        <div class="col-sm-9">
+            <select name="FilterCode" class="col-xs-12 col-sm-6" model="FilterCode">
+                <option value=""></option>
+                <option v-for="n in FilterList" v-bind:value="n.FilterCode">{{ n.FilterName }}</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Mask(%)：</label>
+        <div class="col-sm-9">
+            <input name="Mask" type="text" class="col-xs-12 col-sm-6" model="Mask" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Mask Out(%)：</label>
+        <div class="col-sm-9">
+            <input name="MaskOut" type="text" class="col-xs-12 col-sm-6" model="MaskOut" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Remark：</label>
+        <div class="col-sm-9">
+            <textarea class="col-xs-12 col-sm-6" rows="5" model="Remark"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Create Date：</label>
+        <label class="col-sm-9">
+            {{ CreateTime | date }}
+        </label>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">Update Time：</label>
+        <label class="col-sm-9">
+            {{ UpdateTime | date }}
+        </label>
+    </div>
+
+    <input id="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        filters: {
+            date: function (value) {
+                var d = new Date(value);
+                return d.Format("yyyy-MM-dd hh:mm:ss");
+            }
+        },
+        methods: {
+            save_click: function (e) {
+                var isValid = $(form).valid();
+                if (isValid) {
+                    this.$http.post('@Url.Content("~/DockDoor/Save")', this._data).then(r => {
+                        vm.Result.Code = r.body.Code;
+                        vm.Result.Msg = r.body.Msg;
+                    });
+                }
+            },
+            back_click: function (e) {
+                goBackPage();
+            },
+            Extra_Click: function (e) {
+                bootbox.alert("Ok");
+
+        }
+    });
+
+    //驗証
+    $(form).validate({
+        errorElement: 'span',
+        errorClass: 'lbl help-block',
+        focusInvalid: false,
+        rules: {
+            DockDoorID: { required: true },
+            IP: { required: true, ip: true },
+            CaptionPanelIP: { ip: true },
+            FilterCode: { required: true },
+            Mask: { required: true, digits: true, min: 0, max: 100 },
+            MaskOut: { required: true, digits: true, min: 0, max: 100 }
+        },
+        messages: {
+            DockDoorID: { required: "*" },
+            IP: { required: "*", ip: "IP格式不正確" },
+            CaptionPanelIP: { ip: "IP格式不正確" },
+            FilterCode: { required: "*" },
+            Mask: { required: "*", digits: "必須為整數", min: "不可小於0", max: "不可大於100" },
+            MaskOut: { required: "*", digits: "必須為整數", min: "不可小於0", max: "不可大於100" }
+        },
+        highlight: function (e) { $(e).closest('.form-group').addClass('has-error'); },
+        success: function (e) { $(e).closest('.form-group').removeClass('has-error'); $(e).remove(); }
+    });
+
+    //創建自定正則運算式
+    $.validator.addMethod("ip", function (value, element, params) {
+        var reg = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return (reg.test(value));
+    });
+</script>

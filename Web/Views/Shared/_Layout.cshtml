@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+
+    @Styles.Render("~/Style")
+    @Scripts.Render("~/Scripts")
+</head>
+<body class="no-skin">
+    <div id="navbar" class="navbar navbar-default">
+        <div class="navbar-container" id="navbar-container">
+            <button type="button" class="navbar-toggle menu-toggler pull-left" id="menu-toggler">
+                <span class="sr-only">Toggle sidebar</span> <span class="icon-bar"></span><span class="icon-bar">
+                </span><span class="icon-bar"></span>
+            </button>
+            <div class="navbar-header pull-left">
+                <a href="#" class="navbar-brand"><small>@Definition.AppTitle</small></a>
+            </div>
+            <div class="navbar-buttons navbar-header pull-right" role="navigation">
+                <ul class="nav ace-nav">
+                    <li class="light-blue">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-user fa-fw fa-lg"></i>
+                            <span class="user-info">
+                                <small>
+                                    Welcome,
+                                </small>
+                                @Definition.UserInfo.Name
+                            </span>
+                            <i class="fa fa-caret-down fa-lg"></i>
+                        </a>
+                        <ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+                            <li>
+                                <a href="@Url.Content("~/Password/Edit")">
+                                    <i class="ace-icon fa fa-lock"></i>
+                                    變更密碼
+                                </a>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <a href="@Url.Content("~/Home/Login?type=logout")">
+                                    <i class="ace-icon fa fa-power-off"></i>
+                                    登出
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="main-container" id="main-container">
+        <div id="sidebar" class="sidebar responsive">
+            <!-- 主選單 -->
+            @{ Html.RenderPartial("_MainMenu"); }
+            <div class="sidebar-toggle sidebar-collapse" id="sidebar-collapse">
+                <i class="ace-icon fa fa-angle-double-left" data-icon1="ace-icon fa fa-angle-double-left" data-icon2="ace-icon fa fa-angle-double-right"></i>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="breadcrumbs" id="breadcrumbs">
+                <!-- 巡覽列 -->
+                <div class="SiteMapPath">
+                    <ul class="breadcrumb"><li><i class="ace-icon fa fa-home home-icon"></i>Home</li></ul>
+                </div>
+
+                <!-- 搜尋列 -->
+                <div class="nav-search" id="nav-search">
+                    <div class="form-search">
+                        <span class="input-icon">
+                            <input type="text" class="nav-search-input" autocomplete="off" placeholder="Search ..." />
+                            <i class="ace-icon fa fa-search nav-search-icon"></i>
+                            <button data-novalidate="" style="display:none" />
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="page-content-area">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <!-- 內文區 -->
+                            @RenderBody()
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="footer-inner">
+                <div class="footer-content">
+                    <span class="bigger-120"><span class="blue bolder">EPC</span> Technology Corporation &copy; 2017</span>
+                </div>
+            </div>
+        </div>
+        <a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
+            <i class="ace-icon fa fa-angle-double-up icon-only bigger-110">
+            </i>
+        </a>
+    </div>
+</body>
+</html>
+<script>
+    function myTimer(){ $.ajax({ url: '@Url.Content("~/Home/Index")' }); }
+    setInterval('myTimer()', 1000000);
+</script>

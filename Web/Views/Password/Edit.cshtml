@@ -1,0 +1,100 @@
+﻿@model Models.ViewModel.Password.PasswordEditViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 內容區塊 -->
+    <div class="widget-box">
+        <div class="widget-header">
+            <h4 class="widget-title">
+                <i class="ace-icon fa fa-lock"></i>
+                變更密碼
+            </h4>
+        </div>
+        <div class="widget-body">
+            <div class="widget-main">
+                <div class="form-group">
+                    <label class="col-xs-3 control-label no-padding-right">帳號：</label>
+                    <div class="col-xs-9">
+                        <label>{{ Account }}</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-3 control-label no-padding-right">Email：</label>
+                    <div class="col-xs-9">
+                        <label>{{ Email }}</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-3 control-label no-padding-right">原密碼：</label>
+                    <div class="col-xs-9">
+                        <input id="password" name="password" type="password" class="col-xs-12 col-sm-6" v-model="Password" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-3 control-label no-padding-right">新密碼：</label>
+                    <div class="col-xs-9">
+                        <input id="newPassword" name="newPassword" type="password" class="col-xs-12 col-sm-6" v-model="NewPassword" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-3 control-label no-padding-right">確認新密碼：</label>
+                    <div class="col-xs-9">
+                        <input id="confirmNewPassword" name="confirmNewPassword" type="password" class="col-xs-12 col-sm-6" v-model="ConfirmNewPassword" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions center">
+                <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="change_password">變更密碼</button>
+                <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="clear_password">清除</button>
+            </div>
+        </div>
+    </div>
+
+    <input id="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            change_password: function (e) {
+                var isValid = $(form).valid();
+                if (isValid) {
+                    this.$http.post('Edit', this._data).then(r => {
+                        vm.Result.Code = r.body.Code;
+                        vm.Result.Msg = r.body.Msg;
+                    });
+                }
+            },
+            clear_password: function (e) {
+                vm.Password = "";
+                vm.NewPassword = "";
+                vm.ConfirmNewPassword = "";
+            }
+        }
+    });
+
+    //驗証
+    $(form).validate({
+        errorElement: 'span',
+        errorClass: 'lbl help-block',
+        focusInvalid: false,
+        rules: {
+            password: { required: true },
+            newPassword: { required: true, minlength: 6 },
+            confirmNewPassword: { required: true, equalTo: "#newPassword" }
+        },
+        messages: {
+            password: { required: "*" },
+            newPassword: { required: "*", minlength: "最少需6碼字元" },
+            confirmNewPassword: { required: "*", equalTo: "密碼不相符" }
+        },
+        highlight: function (e) { $(e).closest('.form-group').addClass('has-error'); },
+        success: function (e) { $(e).closest('.form-group').removeClass('has-error'); $(e).remove(); }
+    });
+</script>

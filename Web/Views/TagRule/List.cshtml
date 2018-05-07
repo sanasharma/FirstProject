@@ -1,0 +1,70 @@
+﻿@model Models.ViewModel.TagRule.TagRuleListViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <div class="col-xs-12">
+        <button v-if="Authority.Add" type="button" class="btn btn-success btn-block" v-on:click="add_click()">新增</button>
+    </div>
+
+    <div v-for="(n, i) in List" class="col-xs-12">
+        <div class="widget-box">
+            <div class="widget-header">
+                <h4 class="widget-title">{{ n.FilterName }}</h4>
+
+                <span class="widget-toolbar">
+                    <a v-if="Authority.Edit" href="#" title="編輯" v-on:click="edit_click(n.FilterCode)">
+                        <i class="ace-icon fa fa-pencil-square-o bigger-150 blue"></i>
+                    </a>
+                    <a v-if="Authority.Del" href="#" title="刪除" v-on:click="del_click(i, n.FilterCode)">
+                        <i class="ace-icon fa fa-times bigger-150 red"></i>
+                    </a>
+                </span>
+            </div>
+            <div class="widget-body">
+                <div class="widget-main">
+                    <div>
+                        規則編號：{{ n.FilterCode }}
+                    </div>
+                    <div style="word-break:break-all">
+                        規則清單：{{ n.FilterRules}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input id="jsonData" name="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            add_click: function () {
+                redirectPage("Add");
+            },
+            edit_click: function (code) {
+                redirectPage("Edit/" + code);
+            },
+            del_click: function (index, code) {
+                var confirmMsg = "是否移除" + code + "的標籤規則?";
+                bootbox.confirm(confirmMsg, function (result) {
+                    if (result) {
+                        vm.$http.post('Remove/' + code).then(r => {
+                            if (r.body.Code == 1) {
+                                vm.List.splice(index, 1);
+                            }
+
+                            bootbox.alert(r.body.Msg);
+                        });
+                    }
+                });
+            }
+        }
+    });
+</script>

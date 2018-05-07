@@ -1,0 +1,108 @@
+﻿@model Models.ViewModel.SysParams.SysParamsListViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 查詢區塊 -->
+    <div class="widget-box">
+        <div class="widget-header widget-header-small">
+            <h4 class="widget-title">
+                <i class="ace-icon fa fa-search"></i>
+                查詢
+            </h4>
+        </div>
+        <div class="widget-body">
+            <div class="widget-main">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6 col-lg-4">
+                        <div class="form-group">
+                            <label class="col-xs-3 control-label no-padding-right">參數代碼：</label>
+                            <div class="col-xs-7">
+                                <input type="text" class="input-sm form-control" placeholder="等於" v-model="Parameters.ParaCode" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-lg-4">
+                        <div class="form-group">
+                            <label class="col-xs-3 control-label no-padding-right">參數描述：</label>
+                            <div class="col-xs-7">
+                                <input type="text" class="input-sm form-control" placeholder="包含" v-model="Parameters.ParaDesc" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions center">
+                <button v-if="Authority.Query" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="query_click"><i class="ace-icon fa fa-search"></i>查詢</button>
+                <button v-if="Authority.Export" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="export_click"><i class="ace-icon fa fa-file-excel-o"></i>匯出</button>
+                <button v-if="Authority.Add" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="add_click"><i class="ace-icon fa fa-plus"></i>新增</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 分頁區塊 -->
+    <Pagination v-bind:value="Pages"></Pagination>
+
+    <!-- 內容區塊 -->
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>參數代碼</th>
+                <th>參數值</th>
+                <th>參數描述</th>
+                <th>管理</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="n in List">
+                <td>{{ n.ParaCode }}</td>
+                <td>{{ n.ParaValue }}</td>
+                <td>{{ n.ParaDesc }}</td>
+                <td>
+                    <a v-if="Authority.Edit" class="btn btn-xs btn-info" title="編輯" v-on:click="edit_click(n.ParaCode)">
+                        <i class="ace-icon fa fa-pencil bigger-120"></i>
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot v-if="List.length == 0">
+            <tr>
+                <td colspan="4" class="center">
+                    <i class="ace-icon fa fa-exclamation-triangle red bigger-130"></i>
+                    <span class="red bolder">無資料</span>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <input id="jsonData" name="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            query_click: function () {
+                var url = location.href;
+                url = changeURLArg(url, 'ParaCode', this.Parameters.ParaCode);
+                url = changeURLArg(url, 'ParaDesc', this.Parameters.ParaDesc);
+
+                location.href = url;
+            },
+            edit_click: function (ParaCode) {
+                redirectPage('Edit/' + ParaCode);
+            },
+            add_click: function (e) {
+                redirectPage("Add");
+            },
+            export_click: function (e) {
+                this.$http.post('Export', this._data).then(r => {
+                    var blob = new Blob([r.body], { type: 'application/vnd.ms-excel' });
+                    saveAs(blob, 'SysParamsList.xls');
+                });
+            }
+        }
+    });
+</script>

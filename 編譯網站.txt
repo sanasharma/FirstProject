@@ -1,0 +1,2 @@
+cd C:\Windows\Microsoft.NET\Framework\v4.0.30319
+aspnet_compiler -v /MyApp -p C:\Users\colin\Desktop\Case3\«n¸s³Ð\e0615_Door_20180320_inn\Web D:\e0615_Door

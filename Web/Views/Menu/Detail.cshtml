@@ -1,0 +1,123 @@
+﻿@model Models.ViewModel.Menu.MenuDetailViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 工具列區塊 -->
+    <div class="well well-sm">
+        <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="save_click"><i class="ace-icon fa fa-save"></i>儲存</button>
+        <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="back_click"><i class="ace-icon fa fa-reply"></i>回到列表</button>
+    </div>
+
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 內容區塊 -->
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">選單編號：</label>
+        <div class="col-sm-9">
+            <input id="MenuNo" name="MenuNo" type="text" class="col-xs-12 col-sm-6" readonly v-model="MenuNo" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">選單名稱：</label>
+        <div class="col-sm-9">
+            <input id="MenuName" name="MenuName" type="text" class="col-xs-12 col-sm-6" v-model="MenuName" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">類型：</label>
+        <div class="col-sm-9">
+            <select id="Type" name="Type" class="col-xs-12 col-sm-6" v-bind:disabled="MenuNo != null" v-model="Type">
+                <option value="">請選擇</option>
+                <option value="System">分類</option>
+                <option value="Page">頁面</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group" v-show="Type == 'Page'">
+        <label class="col-sm-3 control-label no-padding-right">選單網址：</label>
+        <div class="col-sm-9">
+            <input id="MenuLink" name="MenuLink" type="text" class="col-xs-12 col-sm-6" v-model="MenuLink" />
+        </div>
+    </div>
+    <div class="form-group" v-show="Type == 'Page'">
+        <label class="col-sm-3 control-label no-padding-right">選單描述：</label>
+        <div class="col-sm-9">
+            <input id="MenuDesc" name="MenuDesc" type="text" class="col-xs-12 col-sm-6" v-model="MenuDesc" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">是否啟用：</label>
+        <div class="col-sm-9">
+            <label>
+                <input id="Enabled" name="Enabled" class="ace ace-switch ace-switch-6" type="checkbox" v-model="Enabled" />
+                <span class="lbl"></span>
+            </label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">選單圖示：</label>
+        <div class="col-sm-9">
+            <input id="MenuIco" name="MenuIco" type="text" class="col-xs-12 col-sm-6" v-model="MenuIco" />
+        </div>
+    </div>
+    <div class="form-group" v-if="MenuNo != null">
+        <label class="col-sm-3 control-label no-padding-right">排序值：</label>
+        <div class="col-sm-9">
+            <input id="OrderID" name="OrderID" type="text" class="col-xs-12 col-sm-6" v-model="OrderID" />
+        </div>
+    </div>
+
+    <input id="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        watch: {
+            Type: function () {
+                if (this.Type == 'System') {
+                    this.MenuLink = '';
+                    this.MenuDesc = '';
+                }
+            }
+        },
+        methods: {
+            save_click: function (e) {
+                var isValid = $(form).valid();
+                if (isValid) {
+                    this.$http.post('@Url.Content("~/Menu/Save")', this._data).then(r => {
+                        vm.Result.Code = r.body.Code;
+                        vm.Result.Msg = r.body.Msg;
+                    });
+                }
+            },
+            back_click: function (e) {
+                goBackPage();
+            }
+        }
+    });
+
+    //驗証
+    $(form).validate({
+        errorElement: 'span',
+        errorClass: 'lbl help-block',
+        focusInvalid: false,
+        rules: {
+            MenuName: { required: true },
+            Type: { required: true },
+            MenuIco: { required: true },
+            OrderID: { required: true }
+        },
+        messages: {
+            MenuName: { required: "*" },
+            Type: { required: "*" },
+            MenuIco: { required: "*" },
+            OrderID: { required: "*" }
+        },
+        highlight: function (e) { $(e).closest('.form-group').addClass('has-error'); },
+        success: function (e) { $(e).closest('.form-group').removeClass('has-error'); $(e).remove(); }
+    });
+</script>

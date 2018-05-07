@@ -1,0 +1,196 @@
+﻿@model Models.ViewModel.SpecialTruck.SpecialTruckListViewModel
+<style>
+fieldset {
+  overflow: hidden
+}
+
+.some-class {
+  float: left;
+  clear: none;
+}
+
+label {
+  float: left;
+  clear: none;
+  display: block;
+  padding: 2px 1em 0 0;
+}
+
+    input[type=radio],
+    input.radio {
+        float: left;
+        clear: none;
+        margin: 2px 0 0 2px;
+    }
+
+</style>
+
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 查詢區塊 -->
+    <div class="widget-box">
+        <div class="widget-header widget-header-small">
+            <h4 class="widget-title">
+                <i class="ace-icon fa fa-search"></i>
+                查詢
+            </h4>
+        </div>
+        <div class="widget-body">
+            <div class="widget-main">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6 col-lg-4">
+                        <div class="form-group">
+                            <label class="col-xs-3 control-label no-padding-right">碼頭編號：</label>
+                            <div class="col-xs-7">
+                                <input type="text" class="input-sm form-control" placeholder="等於" v-model="Parameters.TRUCK_NO"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions center">
+                <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="query_click" ><i class="ace-icon fa fa-search"></i>查詢</button>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- 分頁區塊 -->
+    <Pagination v-bind:value="Pages"></Pagination>
+
+
+    <!-- 內容區塊 -->
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Truck_NO</th>
+                <th>Dock Door ID</th>
+                <th>STATUS</th>
+                <th>Send</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="n in List">
+                <td>{{ n.TRUCK_NO }}</td>
+              
+                    <td>
+                        <div class="some-class" v-for="b in n.dockdoorList" key="b.DockDoorID">
+                            <div v-if="b.ContainerID !='' && b.ContainerID !=' '">
+                                <input class="radiotext" type="radio" disabled>
+                                <label>
+                                    {{b.DockDoorID}}
+                                </label>
+                            </div>
+                            <div v-else="b.ContainerID =='' && b.ContainerID ==' '">
+                                <input class="radiotext" name="myfield" type="radio" v-bind:value="b.DockDoorID" v-model="n.SelectedDockDoorID">
+                                <label>{{b.DockDoorID}}</label>
+                            </div>
+                          
+                        </div>
+
+                    </td>
+               
+                  
+                <td>
+                    <div v-if="n.STATUS == 'I'">Incoming</div>
+                    <div v-else-if="n.STATUS == 'O'">Outgoing</div>
+                </td>
+                <td>
+                    <div v-if="n.Exist && n.Flag">  
+
+                        <input type="button" value="IN"  v-on:click="In_click(n.TRUCK_NO,n.SelectedDockDoorID)" style="font-size:9pt;color:white;background-color:green;border:4px solid;border-radius: 20px 20px;" disabled>
+
+                        <input type="button" value="OUT"  v-on:click="Out_click(n.TRUCK_NO,n.SelectedDockDoorID)" style="font-size:7pt;color:white;background-color:red;border:4px solid;border-radius: 20px 20px;" disabled>   
+                    </div>
+                    <div v-else-if="n.Exist && !n.Flag">
+
+                        <input type="button" value="IN" v-on:click="In_click(n.TRUCK_NO,n.SelectedDockDoorID)" style="font-size:9pt;color:white;background-color:green;border:4px solid;border-radius: 20px 20px;" disabled="disabled">
+
+                        <input type="button" value="OUT" v-on:click="Out_click(n.TRUCK_NO,n.SelectedDockDoorID)" style="font-size:7pt;color:white;background-color:red;border:4px solid;border-radius: 20px 20px;">
+
+                    </div>
+                    <div v-else>
+
+                        <input type="button"  value="IN"   v-on:click="In_click(n.TRUCK_NO,n.SelectedDockDoorID)"  style="font-size:9pt;color:white;background-color:green;border:4px solid;border-radius: 20px 20px;">
+
+                            <input  type="button"  value="OUT"  v-on:click="Out_click(n.TRUCK_NO,n.SelectedDockDoorID)" style="font-size:7pt;color:white;background-color:red;border:4px solid;border-radius: 20px 20px;" disabled="disabled">
+                  
+                    </div>
+                   
+                </td>
+            </tr>
+           
+        </tbody>
+    </table>
+    <div id="divValidation" style="display:none;">
+        <span style="font-weight:bold;color:red;padding-left: 25%;">Please Select Door Code</span>
+
+    </div>
+    <input id="jsonData" name="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            query_click: function () {
+
+
+                var url = location.href;
+                url = changeURLArg(url, 'TRUCK_NO', this.Parameters.TRUCK_NO);
+
+                location.href = url;
+            },
+
+            In_click: function (truckId, selecteddoorId) {
+                $('#divValidation').hide();
+                vm.sid = selecteddoorId;
+                if (selecteddoorId != null) {
+                    vm.$http.post('save?truckId=' + truckId + '&status=' + 'I' + '&dockdoorId=' + selecteddoorId).then(r => {
+                        bootbox.alert(r.body.Msg);
+                           location.reload();
+
+                    });
+                }
+                else {
+                    $('#divValidation').show();
+                }
+              
+            },
+
+            Out_click: function (truckId, selecteddoorId) {
+                debugger;
+                vm.$http.post('save?truckId=' + truckId + '&status=' + 'O' + '&dockdoorId=' + selecteddoorId).then(r => {
+                    bootbox.alert(r.body.Msg);
+                    location.reload();
+                });
+            },
+          
+        },
+        function(n, SelectedDockDoorID) {
+            debugger;
+            vm.sid = car[SelectedDockDoorID];
+        }
+
+    });
+    $(':button[value="IN"]').on('click', function () {
+        //debugger;
+        alert(this.List.SelectedDockDoorID);
+        //return;
+        var $td = $(this).closest('td');
+        $td.find($(':button[value="IN"]')).prop('disabled', true);
+        $td.find($(':button[value="OUT"]')).prop('disabled', false);
+
+    });
+
+
+
+</script>
+

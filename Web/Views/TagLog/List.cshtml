@@ -1,0 +1,158 @@
+﻿@model Models.ViewModel.TagLog.TagLogListViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 查詢區塊 -->
+    <div class="widget-box">
+        <div class="widget-header widget-header-small">
+            <h4 class="widget-title">
+                <i class="ace-icon fa fa-search"></i>
+                查詢
+            </h4>
+        </div>
+        <div class="widget-body">
+            <div class="widget-main">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6 col-lg-4">
+                        <div class="form-group">
+                            <label class="col-xs-3 control-label no-padding-right">碼頭編號：</label>
+                            <div class="col-xs-7">
+                                <input type="text" class="input-sm form-control" placeholder="等於" v-model="Parameters.DockDoorID" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-lg-4">
+                        <div class="form-group">
+                            <label class="col-xs-3 control-label no-padding-right">上報狀態：</label>
+                            <div class="col-xs-7">
+                                <select class="input-sm form-control" v-model="Parameters.Status">
+                                    <option value="">全部</option>
+                                    <option value="Y">成功</option>
+                                    <option value="N">失敗</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions center">
+                <button v-if="Authority.Query" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="query_click"><i class="ace-icon fa fa-search"></i>查詢</button>
+                <button v-if="Authority.Export" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="export_click"><i class="ace-icon fa fa-file-excel-o"></i>匯出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分頁區塊 -->
+    <Pagination v-bind:value="Pages"></Pagination>
+
+    <!-- 內容區塊 -->
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>碼頭編號</th>
+                <th>控制器IP</th>
+                <th>讀取時間</th>
+                <th>上報狀態</th>
+                <th>上報訊息</th>
+                <th>管理</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="(n, i) in List">
+                <td>{{ n.DockDoorID }}</td>
+                <td>{{ n.IP }}</td>
+                <td>{{ n.DateTime | time }}</td>
+                <td>
+                    <i v-if="n.Status == 'Y' | n.Status == 'A'" class="ace-icon fa fa-check bigger-130 green"></i>
+                    <i v-else-if="n.Status == 'N' | n.Status == '0'" class="ace-icon fa fa-times bigger-130 red"></i>
+                </td>
+                <td v-bind:class="[n.Status == 'Y' | n.Status == 'A' ? 'green' : 'red']">{{ n.Msg }}</td>
+                <td>
+                    <a v-if="Authority.Query" class="btn btn-xs btn-info" title="明細" v-on:click="view_click(n)">
+                        <i class="ace-icon fa fa-search-plus bigger-130"></i>
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot v-if="List.length == 0">
+            <tr>
+                <td colspan="6" class="center">
+                    <i class="ace-icon fa fa-exclamation-triangle red bigger-130"></i>
+                    <span class="red bolder">無資料</span>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- 模態框區塊 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="bootbox-close-button close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title">上報明細</h4>
+                </div>
+                <div class="modal-body">
+                    權重比(%)：<label id="Mask"></label>
+                    <table style="width:100%;">
+                        <tr>
+                            <td style="width:50%; vertical-align:top;">原始資料：<pre id="jsonCode"></pre></td>
+                            <td style="width:50%; vertical-align:top;">上報資料：<pre id="jsonPostCode"></pre></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input id="jsonData" name="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        filters: {
+            time: function (value) {
+                var d = new Date(value);
+                return d.Format("yyyy-MM-dd hh:mm:ss");
+            },
+            status: function (value) {
+                if (value == 'Y') {
+                    return '<i class="ace-icon fa fa-check bigger-110 green"></i>';
+                } else {
+                    return '<i class="ace-icon fa fa-times bigger-110 red"></i>';
+                }
+            }
+        },
+        methods: {
+            query_click: function () {
+                var url = location.href;
+                url = changeURLArg(url, 'DockDoorID', this.Parameters.DockDoorID);
+                url = changeURLArg(url, 'Status', this.Parameters.Status);
+
+                location.href = url;
+            },
+            view_click: function (obj) {
+                var jsonObj = JSON.parse(obj.Data);
+                var jsonPostObj = JSON.parse(obj.PostData);
+                $("#jsonCode").html(JSON.stringify(jsonObj, null, 2));
+                $("#jsonPostCode").html(JSON.stringify(jsonPostObj, null, 2));
+                $("#Mask").html(obj.Mask);
+
+                var myModal = $("#myModal");
+                myModal.modal();
+            },
+            export_click: function (e) {
+                this.$http.post('Export', this._data).then(r => {
+                    var blob = new Blob([r.body], { type: 'application/vnd.ms-excel' });
+                    saveAs(blob, 'TagLogList.xls');
+                });
+            },
+        }
+    });
+</script>

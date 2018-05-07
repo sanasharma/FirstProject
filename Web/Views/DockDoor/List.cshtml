@@ -1,0 +1,227 @@
+﻿@model Models.ViewModel.DockDoor.DockDoorListViewModel
+<style>
+    .button_IN{
+        font-size:9pt;
+          font-weight:bold;
+           height:25px;
+           color:white;
+           background-color:#5cb85c;
+           border:1px solid;
+    }
+       .button_Out{
+        font-size:9pt;
+          font-weight:bold;
+           height:25px;
+           color:white;
+           background-color:#6fb3e0;
+           border:1px solid;
+    }
+</style>
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 查詢區塊 -->
+    <div class="widget-box">
+        <div class="widget-header widget-header-small">
+            <h4 class="widget-title">
+                <i class="ace-icon fa fa-search"></i>
+                查詢
+            </h4>
+        </div>
+        <div class="widget-body">
+            <div class="widget-main">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6 col-lg-4">
+                        <div class="form-group">
+                            <label class="col-xs-3 control-label no-padding-right">碼頭編號：</label>
+                            <div class="col-xs-7">
+                                <input type="text" class="input-sm form-control" placeholder="等於" v-model="Parameters.DockDoorID" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions center">
+                <button v-if="Authority.Query" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="query_click"><i class="ace-icon fa fa-search"></i>查詢</button>
+                <button v-if="Authority.Export" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="export_click"><i class="ace-icon fa fa-file-excel-o"></i>匯出</button>
+                <button v-if="Authority.Add" type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="add_click"><i class="ace-icon fa fa-plus"></i>新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分頁區塊 -->
+    <Pagination v-bind:value="Pages"></Pagination>
+    
+    <!-- 內容區塊 -->
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>碼頭編號</th>
+                <th>控制器IP</th>
+                <th>位置</th>
+                <th>白名單</th>
+                <th>警報</th>
+                <th>貨櫃號碼</th>
+                <th>貨櫃狀態</th>
+                <th>管理</th>
+                <th></th>
+                <th>程式狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="(n, i) in List">
+                <td>{{ n.DockDoorID }}</td>
+                <td>{{ n.IP }}</td>
+                <td>{{ n.Locate }}</td>
+                <td>{{ n.FilterName }}</td>
+                <td>
+                    <i v-if="n.Alarm == 'Y'" class="ace-icon fa fa-volume-up bigger-150 red"></i>
+                </td>
+                <td>{{ n.ContainerID }}</td>
+                <td>
+
+                    <div v-if="n.ContainerStatus == 'O'">待裝櫃</div>
+                    <div v-else-if="n.ContainerStatus == 'I'">待卸櫃</div>
+                    <div v-else-if="n.ContainerStatus == ' '"> </div>
+                    <div v-else-if="n.ContainerStatus == 'N'">無貨櫃標籤</div>
+                </td>
+                <td>
+                    <a v-if="Authority.Edit" class="btn btn-xs btn-info" title="編輯" v-on:click="edit_click(n.DockDoorID)">
+                        <i class="ace-icon fa fa-pencil bigger-120"></i>
+                    </a>
+                    <a v-if="Authority.Edit" class="btn btn-xs btn-warning" title="關閉警報" v-on:click="alarm_click(n.DockDoorID, i)">
+                        <i class="ace-icon fa fa-volume-off bigger-120"></i>
+                    </a>
+                    <a v-if="Authority.Edit" class="btn btn-xs btn-purple" title="更新貨櫃狀態" v-on:click="truck_click(n.IP, i)">
+                        <i class="ace-icon fa fa-truck bigger-120"></i>
+                    </a>
+                    <a v-if="Authority.Admin" class="btn btn-xs btn-success" title="開啟程式" v-on:click="open_click(n.IP)">
+                        <i class="ace-icon fa fa-power-off bigger-120"></i>
+                    </a>
+                    <a v-if="Authority.Admin" class="btn btn-xs btn-danger" title="關閉程式" v-on:click="close_click(n.IP)">
+                        <i class="ace-icon fa fa-power-off bigger-120"></i>
+                    </a>
+
+                </td>
+                <td>
+                    <a v-if="n.ContainerID =='' && n.Flag">
+
+                        <input type="button" value="IN" v-on:click="In_click(n.DockDoorID)" class="button_IN">
+
+                        <input type="button" value="OUT" class="button_Out" disabled="disabled">
+
+                    </a>
+                    <a v-else-if="n.ContainerID!='' &&  n.Flag">
+
+                        <input type="button" value="IN" class="button_IN" disabled="disabled">
+
+                        <input type="button" value="OUT" class="button_Out" disabled="disabled">
+
+                    </a>
+
+                    <a v-else-if="n.ContainerID !='' && !n.Flag">
+
+                        <input type="button" value="IN" class="button_IN" disabled="disabled">
+
+                        <input type="button" value="OUT" class="button_Out" v-on:click="Out_Click(n.DockDoorID,n.ContainerID)">
+
+                    </a>
+                </td>
+                <td>
+                    <div v-if="n.InnoapStatus == 'O'">開啟</div>
+                    <div v-else-if="n.InnoapStatus == 'C'">關閉</div>
+                    <div v-else-if="n.InnoapStatus == 'N'"></div>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot v-if="List.length == 0">
+            <tr>
+                <td colspan="8" class="center">
+                    <i class="ace-icon fa fa-exclamation-triangle red bigger-130"></i>
+                    <span class="red bolder">無資料</span>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <input id="jsonData" name="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            query_click: function () {
+                var url = location.href;
+                url = changeURLArg(url, 'DockDoorID', this.Parameters.DockDoorID);
+
+                location.href = url;
+            },
+           
+            edit_click: function (DockDoorID) {
+                redirectPage('Edit/' + DockDoorID);
+            },
+            alarm_click: function (DockDoorID, index) {
+                vm.$http.post('ClearAlarm/' + DockDoorID).then(r => {
+                    if (r.body.Code == 1) { vm.List[index].Alarm = ''; }
+                    bootbox.alert(r.body.Msg);
+                });
+            },
+            add_click: function (e) {
+                redirectPage("Add");
+            },
+            export_click: function (e) {
+                this.$http.post('Export', this._data).then(r => {
+                    var blob = new Blob([r.body], { type: 'application/vnd.ms-excel' });
+                    saveAs(blob, 'DockDoorList.xls');
+                });
+            },
+            truck_click: function (IP, index) {
+                vm.$http.post('UpdateTruckStatus?ip=' + IP).then(r => {
+                    vm.List[index].ContainerStatus = r.body.Status;
+                    bootbox.alert(r.body.Msg);
+                });
+            },
+            open_click: function (IP) {
+                vm.$http.post('OpenSource?ip=' + IP).then(r => {
+                    if (r.body.Msg != '作業成功') { bootbox.alert(r.body.Msg); }
+                    else { location.href = location.href; }
+                });
+
+                //bootbox.alert(r.body.Msg);
+            },
+            close_click: function (IP) {
+                vm.$http.post('CloseSource?ip=' + IP).then(r => {
+                    if (r.body.Msg != '作業成功') { bootbox.alert(r.body.Msg); }
+                    else { location.href = location.href; }
+
+                    //bootbox.alert(r.body.Msg);
+                });
+            },
+            In_click: function (dockdoorID) {
+                debugger;
+                redirectPage('SpecialTruckDetails?dockdoorID=' + dockdoorID);
+
+            },
+            Out_Click: function (dockdoorID, truckId) {
+                this.$http.post('saveSpecialTruckDetails?truckId=' + truckId + '&status=' + 'O' + '&dockDoorID=' + dockdoorID).then(r => {
+                    bootbox.alert(r.body.Msg);
+                    setTimeout(location.reload.bind(location), 3000);
+                });
+            },
+            
+        }
+    });
+
+    $(':button[value="IN"]').on('click', function () {
+        var $td = $(this).closest('a');
+        $td.find($(':button[value="IN"]')).prop('disabled', true);
+        $td.find($(':button[value="OUT"]')).prop('disabled', false);
+
+    });
+</script>

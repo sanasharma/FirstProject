@@ -1,0 +1,88 @@
+﻿@model Models.ViewModel.Menu.MenuListViewModel
+
+<style>
+    .subtext {
+        margin-left: 30px;
+    }
+</style>
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 新增主選單 -->
+    <div class="col-xs-12">
+        <div class="form-group">
+            <label class="control-label no-padding-right">新增主選單</label>
+            <a v-if="Authority.Add" class="btn btn-xs btn-success" title="增加主選單" v-on:click="add_click('')">
+                <i class="ace-icon fa fa-plus bigger-120"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- 內容區塊 -->
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <td>選單名稱</td>
+                <td>選單描述</td>
+                <td>管理</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="(n, index) in List">
+                <td>
+                    <div v-bind:class="[{subtext: n.MenuNo.length > 2}]">
+                        <i v-bind:class="['ace-icon', 'bigger-120', 'fa', n.MenuIco]"></i>
+                        {{ n.MenuName }}
+                    </div>
+                </td>
+                <td>
+                    {{ n.MenuDesc }}
+                </td>
+                <td>
+                    <a v-if="Authority.Add & n.Type == 'System'" class="btn btn-xs btn-success" title="增加子選單" v-on:click="add_click(n.MenuNo)">
+                        <i class="ace-icon fa fa-plus bigger-120"></i>
+                    </a>
+                    <a v-if="Authority.Edit" class="btn btn-xs btn-info" title="編輯" v-on:click="edit_click(n.MenuNo)">
+                        <i class="ace-icon fa fa-pencil bigger-120"></i>
+                    </a>
+                    <a v-if="Authority.Del" class="btn btn-xs btn-danger" title="刪除" v-on:click="del_click(index, n.MenuNo);">
+                        <i class="ace-icon fa fa-trash-o bigger-120"></i>
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <input id="jsonData" name="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            add_click: function (no) {
+                redirectPage("Add/" + no);
+            },
+            edit_click: function (no) {
+                redirectPage("Edit/" + no);
+            },
+            del_click: function (index, no) {
+                bootbox.confirm("是否確定刪除此選單與此所有相關資料?", function (result) {
+                    if (result) {
+                        vm.$http.post('Del/' + no).then(r => {
+                            bootbox.alert(r.body.Msg);
+                            if (r.body.Code == 1) {
+                                vm.List.splice(index, 1);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    });
+</script>

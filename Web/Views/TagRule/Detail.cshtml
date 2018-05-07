@@ -1,0 +1,76 @@
+﻿@model Models.ViewModel.TagRule.TagRuleDetailViewModel
+
+<form id="MainContent" role="form" class="form-horizontal" v-cloak>
+    <!-- 工具列區塊 -->
+    <div class="well well-sm">
+        <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="save_click"><i class="ace-icon fa fa-save"></i>儲存</button>
+        <button type="button" class="btn btn-white btn-inverse btn-sm" v-on:click="back_click"><i class="ace-icon fa fa-reply"></i>回到列表</button>
+    </div>
+
+    <!-- 訊息區塊 -->
+    <Alert v-bind:value="Result"></Alert>
+
+    <!-- 內容區塊 -->
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">規則編號：</label>
+        <div class="col-sm-9">
+            <input name="FilterCode" type="text" class="col-xs-12 col-sm-6" v-bind:readonly="Action == 'Edit'" v-model="FilterCode" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">規則名稱：</label>
+        <div class="col-sm-9">
+            <input name="FilterName" type="text" class="col-xs-12 col-sm-6" v-model="FilterName" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right">規則清單：</label>
+        <div class="col-sm-9">
+            <input name="FilterRules" type="text" class="col-xs-12 col-sm-6" v-model="FilterRules" />
+        </div>
+    </div>
+
+    <input id="jsonData" type="hidden" value="@Model.ToJSON()" />
+</form>
+
+<script>
+    var form = '#MainContent';
+    var data = $('#jsonData').val();
+    var vm = new Vue({
+        el: form,
+        data: JSON.parse(data),
+        methods: {
+            save_click: function (e) {
+                var isValid = $(form).valid();
+                if (isValid) {
+                    this.$http.post('@Url.Content("~/TagRule/Save")', this._data).then(r => {
+                        vm.Result.Code = r.body.Code;
+                        vm.Result.Msg = r.body.Msg;
+                    });
+                }
+            },
+            back_click: function (e) {
+                goBackPage();
+            }
+        }
+    });
+
+    //驗証
+    $(form).validate({
+        errorElement: 'span',
+        errorClass: 'lbl help-block',
+        focusInvalid: false,
+        rules: {
+            FilterCode: { required: true },
+            FilterName: { required: true },
+            FilterRules: { required: true }
+        },
+        messages: {
+            FilterCode: { required: "*" },
+            FilterName: { required: "*" },
+            FilterRules: { required: "*" }
+        },
+        highlight: function (e) { $(e).closest('.form-group').addClass('has-error'); },
+        success: function (e) { $(e).closest('.form-group').removeClass('has-error'); $(e).remove(); }
+    });
+</script>
